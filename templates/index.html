@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF OCR Parser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #f7f7fb;
+            --card: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --primary: #6d5efc;
+            --primary-600: #5b4bf5;
+            --ring: rgba(109, 94, 252, 0.35);
+            --dashed: #7c7cf5;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            color: var(--text);
+            background: linear-gradient(180deg, #fbfbff 0%, #f1f4ff 100%);
+        }
+        .container {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 32px 24px 56px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: radial-gradient(120% 120% at 0% 0%, #7c7cf5 0%, #a08bff 45%, #c1b8ff 100%);
+            color: white;
+            box-shadow: 0 10px 30px rgba(109,94,252,.25);
+        }
+        .title {
+            font-weight: 700;
+            font-size: 24px;
+            line-height: 1.1;
+            margin: 0;
+        }
+        .subtitle {
+            margin: 2px 0 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+        .hero {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 28px 28px;
+            box-shadow: 0 10px 30px rgba(2, 6, 23, 0.06), 0 2px 6px rgba(2, 6, 23, 0.04);
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .hero h2 {
+            margin: 0 0 6px 0;
+            font-weight: 700;
+            font-size: 24px;
+        }
+        .hero p {
+            margin: 0;
+            color: var(--muted);
+        }
+        .dropzone {
+            margin-top: 26px;
+            background: #f8f9ff;
+            border: 2px dashed var(--dashed);
+            border-radius: 14px;
+            height: 360px;
+            display: grid;
+            place-items: center;
+            transition: all .2s ease;
+        }
+        .dropzone.dragover {
+            background: #eef0ff;
+            box-shadow: 0 0 0 8px var(--ring);
+        }
+        .dz-content { text-align: center; }
+        .dz-icon {
+            width: 74px;
+            height: 74px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 16px;
+            background: white;
+            box-shadow: 0 10px 25px rgba(125, 114, 255, .25), inset 0 0 0 6px #f0efff;
+            color: var(--primary);
+        }
+        .dz-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+        }
+        .muted { color: var(--muted); }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: var(--primary);
+            color: #fff;
+            border: 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background .15s ease, transform .05s ease;
+        }
+        .btn:hover { background: var(--primary-600); }
+        .btn:active { transform: translateY(1px); }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .controls {
+            max-width: 1120px;
+            margin: 24px auto 0;
+            display: none;
+        }
+        .controls.show { display: block; }
+        .panel {
+            background: var(--card);
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(2, 6, 23, 0.06);
+            padding: 18px;
+        }
+        .panel h3 { margin: 0 0 10px 0; }
+        textarea {
+            width: 100%;
+            min-height: 260px;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            resize: vertical;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        }
+        .select {
+            margin-top: 14px;
+            display: inline-block;
+        }
+        select {
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+        .note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+        .hidden-input { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 3l2.2 4.46L19 8.27l-3.5 3.41.83 4.82L12 14.77l-4.33 1.73.83-4.82L5 8.27l4.8-.81L12 3z" fill="currentColor"/>
+                </svg>
+            </div>
+            <div>
+                <p class="title">PDF OCR Parser</p>
+                <p class="subtitle">Extract text from PDFs using advanced OCR technology</p>
+            </div>
+        </div>
+
+        <div class="hero">
+            <h2>Upload Your PDF for OCR</h2>
+            <p class="muted">Advanced text extraction using AI-powered OCR technology</p>
+
+            <form id="upload-form">
+                <input id="file-input" name="file" type="file" accept="application/pdf" class="hidden-input" required>
+                <div id="dropzone" class="dropzone" tabindex="0">
+                    <div class="dz-content">
+                        <div class="dz-icon">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 16V8m0 0l-3.5 3.5M12 8l3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="4" y="16" width="16" height="4" rx="1.5" fill="currentColor" opacity=".15"/>
+                            </svg>
+                        </div>
+                        <p class="dz-title">Upload PDF Document</p>
+                        <p class="muted">Drag and drop or click to browse</p>
+                        <div class="actions">
+                            <button type="button" id="choose-btn" class="btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 5v14m7-7H5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                Choose PDF File
+                            </button>
+                        </div>
+                        <div class="note">Maximum file size: 20MB</div>
+                        <div class="note">Parsing method: OCR (Tesseract)</div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="controls" class="controls">
+            <div class="panel">
+                <h3>Parsed Text</h3>
+                <textarea id="parsed-text" readonly></textarea>
+                <div class="actions" style="justify-content:flex-start;">
+                    <button id="copy-btn" class="btn">Copy Text</button>
+                    <button id="print-btn" class="btn">Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const chooseBtn = document.getElementById('choose-btn');
+        const dropzone = document.getElementById('dropzone');
+        const parsedEl = document.getElementById('parsed-text');
+        const controls = document.getElementById('controls');
+
+        chooseBtn.addEventListener('click', () => fileInput.click());
+
+        ['dragenter', 'dragover'].forEach(evt => {
+            dropzone.addEventListener(evt, e => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('dragover');
+            });
+        });
+        ['dragleave', 'drop'].forEach(evt => {
+            dropzone.addEventListener(evt, e => {
+            e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('dragover');
+            });
+        });
+        dropzone.addEventListener('drop', e => {
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+                fileInput.files = e.dataTransfer.files;
+                submitForm();
+            }
+        });
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files && fileInput.files[0]) {
+                submitForm();
+            }
+        });
+
+        function submitForm() {
+            const data = new FormData();
+            data.append('file', fileInput.files[0]);
+
+            fetch('/upload', { method: 'POST', body: data })
+                .then(r => r.json())
+                .then(json => {
+                    parsedEl.value = json.text || '';
+                    controls.classList.add('show');
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Upload failed. Please try again.');
+                });
+        }
+
+        document.getElementById('copy-btn').addEventListener('click', () => {
+            parsedEl.select();
+            document.execCommand('copy');
+        });
+        document.getElementById('print-btn').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const text = parsedEl.value || '';
+            const splitText = doc.splitTextToSize(text, 190);
+            doc.text(splitText, 10, 10);
+
+            try {
+                const blob = doc.output('blob');
+                const url = URL.createObjectURL(blob);
+                const win = window.open(url, '_blank');
+                if (win) {
+                    const triggerPrint = () => {
+                        win.focus();
+                        // Native PDF viewer print dialog (shows pages, scaling, etc.)
+                        win.print();
+                    };
+                    // When the PDF viewer finishes loading
+                    win.addEventListener('load', triggerPrint);
+                } else {
+                    // Fallback
+                    doc.autoPrint();
+                    window.open(doc.output('bloburl'), '_blank');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+Flask==3.1.0
+PyPDF2==3.0.1
+pdfplumber
+camelot-py
+pdfminer.six
+tika==2.6.0
+pytesseract==0.3.13
+pdf2image==1.17.0
