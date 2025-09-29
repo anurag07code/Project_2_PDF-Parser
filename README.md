@@ -1,5 +1,7 @@
 # PDF OCR Parser
 
+![App UI](images/image.png)
+
 Modern Flask web app to extract text from PDFs using OCR only. The UI provides a drag‑and‑drop uploader, shows the extracted text, and offers Copy and Print (native PDF print dialog with page count and scaling).
 
 ## Features
